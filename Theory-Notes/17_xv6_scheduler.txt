@@ -1,0 +1,147 @@
+Transition from process1 to process2 involves running of the code of scheduler.
+When we type 'cat' on the shell, shell will simply fork, exec.
+As a part of fork, exec, 2 processes are now present.
+So now scheduler needs to choose betn 2 processes.
+
+When a timer interrupt occurs, then context of the shell is stored on the kernel stack of the shell.
+Now scheduler will run. Scheduler cannot run using same stack as of kstack_shell.
+Scheduler runs on behalf of the kernel itself. Not on behalf of the user process. So to make the scheduler code run, it is run on the kstack_Scheduler. kstack_Scheduler is needed bcoz the scheduler also calls many functions.
+
+When scheduler wants to give control to cat, then stack must be changed to kstack_Cat. WHy kstack_Cat?  bcoz kstack_cat contains the context of cat!
+
+Goto main in main.c. The bootloader code passes control to main. The function we are going to see now is mpmain(). Before mpmain(), userinit() was called which created the init process. Now we have to schedule init.
+Before mpmain(), mpinit() was called, which started initializing the processors. mpmain() will end the initialization of processors and processes will start running.
+
+Goto mpmain(). mpmain calls the scheduler. scheduler makes all the cpus run
+Goto scheduler function in proc.c
+
+code of scheduler is C code. When this code was compiled, it was compiled using calling convention.
+scheduler should go through the ptable, and select a process which is ready and run it on the cpu.
+
+sti()  -> asm is gcc directive. sti() enables interrupts. So far interrupts were disabled.
+Q: When did we disable interrupts?
+
+RUNNABLE is READY process in terminology of xv6
+We ignore all non runnable process.
+
+In struct proc we had pointer called context. Goto struct context. It is just 5 registers. Q. Why is the context only these 5 registers.
+
+See what is struct cpu
+Per-cpu state means , for 1 cpu there is a state.
+
+See struct proc* proc in cpu struct.
+
+In cpu struct, there is an array called gdt. This is a per-cpu gdt table. The gdt table that we saw during boot process was containing only 3 entries.
+
+The variable called scheduler is just a pointer to struct context. Where is that scheduler going to be set? Goto mycpu()
+
+Actually in the swtch(&(c->scheduler), ...) , we are passing the address of the pointer scheduler to the swtch
+Why do we pass the address of pointer -> Bcoz swtch() changes the c->scheduler pointer.
+p is the process to be scheduled. p's context is already there/
+Now goto swtch
+
+swtch is in assembly!!!!!
+swtch() was called using calling convention. So read the arguments appropriately
+
+Saving the context -> move values of ACTUAL registers into stack
+Loading the context -> move values from stack into ACTUAL regissters,
+
+The called function has to save the callee saved registers? WHy bcoz the called process is about to change them
+
+pushl %ebp
+pushl %ebs
+.
+.
+
+All these are pushed onto which stack??  Ans  - Kernel(scheduler) stack!. WHen was this stack setup?? Ans - In entry.S. In entry.S $(stack + KSTACKSIZE) was stored in esp, after that main() was called. So the stack which we are using in all the functions of main() uptil now is the stack setup in entry.S
+
+Always remember that, the compilers like gcc onlu change the general purpose registers. They don't change the registers like esp,ss etc. WE change the registers like esp, in assembly.
+
+So these pushes are happening on the current stack, i.e. the stack initialized using .comm in entry.S
+
+# Switch Stacks
+movl %esp, (%eax)  # this means that *old = updated old stack
+				c->scheduler = updated old stack
+movl %edx, %esp   # esp = new stack
+			esp = p->context
+
+Now esp will point to the kernel stack of process to be scheduled. 
+The pointer of the scheduler stack is stored in c->scheduler.
+
+Now we are popping 4 callee-saved registers  -> edi,esi,ebx,ebp. These are popped from the stack of the process now. These will go into the actual registers
+Then we have a ret. WHat does ret do? -> it pops one more time from the stack. What value will be there on the staack now? - the value will be EIP register!. EIP will point to the next instruction to be executed for that process. So now ACTUAL eip will be loaded with this value. Now the process will start running.
+
+So after this ret, we jump to the context of the process,
+
+Why is this swtch code in assembly? - bcoz we have to play with the calling convention!
+
+Now see the struct context again. Observe that it contains 5 elements.
+edi,esi,ebx,ebp,eip
+4 things are getting pushed explicitly. What about eip?  - it gets pushed as a part of call
+
+After ret, we go to the process's context. So the function called swtch() in the scheduler is not returning!!! Even if ret is called, its not returning there. Bcoz we have changed the esp!
+
+The scheduler is called only from mpmain(). mpmain() also runs only once. So mpmain() calls scheduler. So who calls scheduler next time?
+
+In the same file proc.c, see the function sched.
+It takes arguments as swtch(&p->context, mycpu()->scheduler)
+Can you see that these are the exact reverse of the arguments passed to swtch() in scheduler()?
+
+Now we should see which functions are calling the function sched().
+Use cscope to find this out:
+We see that exit, yield, sleep are calling sched.
+exit() calls sched bcoz after a process returns, now scheduler needs to be called to run next process.
+sleep() is called when function is about to be blocked
+yield() calls sched(). Who calls yield? - Ans  trap()!
+
+trap() calls yield if its a timer interrupt!
+yield means to give up to someone else.
+
+in yield() -> the state is set to RUNNABLE. RUNNABLE means READY. and then sched() is called.
+
+What is myproc() -> gets the currently running process from struct cpu.
+sched() calls swtch(&p->context, mycpu()->scheduler)
+As a part of above function call, p->context points to the kernel stack of p where those 5 variables are pushed!
+
+And the esp now points to mycpu()->scheduler. mycpu()->scheduler is the kernel stack for scheduler where the 5 pointers of scheduler context were pushed.
+So we now load the context from mycpu()->scheduler. So we load context of the kernel! This is the same context was saved when swtch() was called from scheduler()
+
+So this swtch() doesn't return in the sched() function. Then where does it return? It returns to the scheduler() function!!. Bcoz the eip of  the next instruction after swtch() in scheduler() function was stored on kernel stack of scheduler! So again that loop will continue executing and scheduler will pick another process.
+
+Now scheduler() is also going to call swtch(). Where will that swtch() return? Ans - If the process 'p' was earlier context switched out using sched(), then it returns in sched()!!! after the swtch() in the sched!
+
+So we found one way a process can return. It will return from the sched(). It will goto yield(). And from there it will goto trap()
+
+Who is calling sleep()? Ans - After read(), scanf(), etc
+Sleep also calls sched.
+
+
+When is kernel stack for process created? - WHen the process is forked.
+WHy each process has its own kernel stack? - bcoz context of process cannot be stored on the application stack of the process. Bcoz application code can do malicious things with it. Kernel stack of process is not accessible to the application code, it is only accessible to the kernel code.
+
+
+A series of events to better understand the swtch() calls in scheduler() and sched():
+Consider a P1 process
+Timer interrupt comes
+
+User stack -> Kernel Stack change happens in hardware. See slide number 23 of 12th ppt
+ss and esp of user stack stored on kernel stack
+Jump to vector64
+alltraps function called
+trapframe built
+goto trap()
+goto yield() // as timer interrupt occured
+goto sched()
+swtch()    -> As a part of swtch() function call, the eip of next instruction after swtch() is stored on kernel stack of p1
+The above swtch() returns after the swtch() of scheduler()!
+
+we reach to statement in scheduler() after swtch():
+
+Now scheduler() will schedule some other process. But there will come a point when scheduler() has to schedule the P1 process! AS it was marked RUNNABLE in yield(). So assume that the time has come now to schedule the P1 process.
+So scheduler() will call swtch(). Now the esp will change to the kernel stack of P1. ret will pop and new value of eip will be set.
+Important Question: Where does this ret take us?  -  It takes us to the swtch() in sched()!! Bcoz that was the last eip value pushed in the kernel stack of P1.
+
+Now from there sched() will return
+sched() -> yield() -> trap() -> alltraps.
+From alltraps all the values in the stack that were built as a part of trapframe will be popped. So now esp and ss will point to the User stack of P1.
+Now the code of P1 will start executing from where it began.

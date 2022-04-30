@@ -1,0 +1,60 @@
+Laptops -> SUpercomputers all have Von Neumann Architecture.
+I/O devices talk to CPU using interrupts and to Memory using DMA.
+Applications of 2 types - System Programs and 
+System Programs - written by keeping in mind a specific processor and OS. Depend on kernel and processor. C libraries, compiler, linker, loader, etc
+Other applications - gui, terminal, gedit, .... these go through the compiler!
+
+cd /boot/
+ls
+the vmlinux-* file is the linux kernel code. This code is loaded by Boot Loader. This file is the Machine code!
+
+The OS Runs means the Kernel runs
+
+Error: file /vmlinz not found
+error: you need to load the kernel first
+This means that kernel was not found by the BOot loader. You have this problem in Ubuntu. The boot loader was configured incorrectly.
+
+sudo update-grub
+This will create the menu entry for grub boot loader. This will most probably fix the issue of error: kernel wasn't found.
+
+We can even make changes in The config of boot loader, by pressing 'e' key on a option. We can see the configuration and then make changes in the file to be loaded.
+
+The Ubuntu Loading Icon in the starting is also Application World!
+
+apt-get source grub2
+Downloads source code of grub
+
+Machine code of grub is different from Machine code of a.out
+
+Compiler is normally used to compile applications. Different compiler is needed for compiling BIOS. different tools(compiler) are needed to compile a compiler.
+
+install-grub command installs grub on sector 0 of hard disk.
+
+While Booting Computer, processor runs in Real Mode.
+
+Applications can deal with hardware also sometimes. It's not that they always have to go through OS.
+
+GNU/Linux - GNU people believe that linux won't work if there are no system programs. Linux is the name of the kernel. GNU is name of system programs, GUI, etc.
+
+The Bootstrap Problem:
+How to compile your program?
+- Using a compiler (obviously!)
+How to compile a compiler?
+- Using the older version of the compiler?.
+How was the first version of compiler compiled?
+- Do not compile. Assemble it. Using an assembler.
+How to assemble the first version of assembler?
+- Do not assemble. Write it in machine language!
+
+Boot-Strap problem - It's like writing compiler and compiling using a compiler. But how to write the first compiler?!
+
+Debian people don't write shell, vi, etc. They make Systems work
+Debian is the mother.
+Ubuntu people copy Debian.
+
+You need to score 100% in that quiz. Infinite attempts allowed.
+
+SMP:
+What does symmetric mean - access to the memory is symmetric.
+
+Dual Core - Single CPU chip has 2 cpus.

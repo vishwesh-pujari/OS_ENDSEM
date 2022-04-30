@@ -1,0 +1,44 @@
+CPU doesn't have features like DAta type, functions etc
+languages like C maps Language features to processor features
+
+System Stack, compilers, Languages:
+Compilers generate machine code which play with the esp. Bcoz compilers have to make function calls.
+System Stack - notional region in a RAM around which esp moves.
+To see how compilers manipulate esp, use gcc -S
+
+pop %ebp - means store top of the stack in ebp and decrement stack pointer
+
+Q. Who is the calling convention for ? - CPU, OS, Compiler?
+Ans - Compiler
+
+endbr64
+push rbp
+mov rsp, rbp
+
+these are same at the starting of all functions
+
+rbp,rsp are index registers.
+rbp is basically an address
+
+push rbp means copy the address in rbp into top of stack. After this rsp decrements. Is this right?
+Q. Does push decrement rsp or rbp? - Ans - push decrements rsp
+-8(%rbp) is which form of addressing?
+
+WHat is the difference between movl and mov and movq?
+movl - move long
+
+rbp always points to the top of the activation record. rsp moves back and forth in the activation record.
+
+There are functions which call main() also.
+Activation record = local vars + parameters + return address.
+
+x86 caller and callee rules - these are the rules for COMPILER.
+To see how compilers behave on 32 bit machines, install a 32 bit OS on VirtualBOx.
+
+Calling convention is specified by the processor manufacturer and convention is used by the COMPILER.
+
+In simple3.c code, 6 parameters are saved in registers, rest are saved in stack. This is bcoz, upto 6 parameters are in registers on 64bit machines.
+
+gcc -O : tries to Optimise the code.
+
+Write many C programs. Try to read assembly code. gcc -S

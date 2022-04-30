@@ -1,0 +1,134 @@
+Overview of some CO, Hardware Concepts:
+
+Computer System = Hardware + OS + System Programs
+
+Ports(USB, HDMI, etc.) that are visible externally are a part of the motherboard.
+Yellow lines on motherboard are connecting wires.
+Motherboard - device that connects various things together.
+
+PRocessor chip is below the fan.
+Different types of slots(RAM, vdo card, PCI slots) present on motherboard. Also has extension slots. All ports are always for I/O(video, audio, etc)
+Motherboard - DRAM Slots, processor socket, PCI Bus slots, Various I/O and power connectors.
+
+CPU:
+Intel: i3,i5,i7,i9,AMD Ryzen3,Ryzen7,etc
+Speeds : GHz
+Brain : Runs machine instructions. The Actual computer
+Where are these instructions stored?
+
+Example instrunctions of x86:
+data movement: MOV,PUSH,POP,...
+Arithmetic: TEST,SHL,ADD,AND
+i/o - IN,OUT (CPU communicates with i/o devices)
+Control - JMP,JZ,JNZ
+
+Now a days certain features are there in a processor that help operating systems work. Bcoz now a days it is assumed that if there is a processor, then there is an OS.
+
+Memory:
+1. Random Access Memory (RAM)
+Why Random? - Any location on RAM is randomly accessible (same time to access any location)
+Semiconductor device.
+
+Q. Can we add more RAM to a computer?
+yes. If slots are available. Now a days laptops are coming with NO EXTRA SLOTS. Be careful while buying!
+
+The Hard Drive:
+Data stored on platters magnetically. Using concepts of magnetism(2 poles) 1 and 0 is stored.
+Head is electromagnetic + Mechanical device. It does all the reading and writing.
+
+Hard Disk is slow bcoz of the mechanical part.
+It is persistent but slow.
+
+Hard Drive is not random access(different timings for different locations)
+
+Different types : SATA,PATA.SAS,IDE
+
+SSD: (Flash)
+Permanent storage
+Much faster than hard disk
+No moving parts - more reliable
+
+Storage Device Hierarchy
+This hierarchy has influenced the design of OS.
+
+Registers                  Smaller Storage Capacity, Faster Access Time
+Cache
+Main Memory
+Non-Volatile memory
+Hard Disk Drives
+Optical Disk (CD/DVD)
+Magnetic Tapes             Larger storage capacity, Slower Access Time
+
+Primary Storage - Registers, Cache, Main Memory
+Secondary Storage - Nonvolatile memory, HDD
+Tertiary Storage - Optical disk, magnetic tapes
+
+REgisters - on the CPu chip
+Caches - can be on the chip or outside.
+Main Memory - DRAM
+What does Better DRAM mean? - Faster access.
+
+Magnetic Tapes - Audio Cassetes
+
+Computer Organization - connect all hardware devices together and make the computer system work.
+
+Hard Disk = THe Disks + Disk Controller
+Monitor = Screen + Graphics Adapter
+
+System Bus - Connects all h/w devices
+
+Von-Neumann Architecture Diagram:
+
+Cache is entirely handled in H/W. OS doesn't care about cache.
+
+CPU and RAM are connected by System Bus. It allows movement of data and instructions.
+
+Device - Hardware devices connected to CPU using some pins(interrupt pins, etc)
+
+Direct connection betn Hard Drive and RAM using DMA(Direct Memory Access) communication channel.
+
+CPU (*N) means multiple CPUs.
+
+When we press 'K' on keyboard, how does K go to CPU?
+When we move a mouse for 1 cm, then how much does it move on screen? Why does it move that much only?
+
+IMPORTANT: What does CPU do?
+1. Fetch instruction from RAM. Location is given by Program Counter(PC) register. The word Program here means instruction.
+2. Decode the instruction and execute it. While doing this may fetch some data from RAM.
+3. While execution of instruction, change/update the program counter.
+4. GOTO 1;
+
+Processor runs in infinite loop. DUMB device. It can understand a variety of instructions. 300-400 instructions for modern processor.
+
+Processor is like a mixer. Turn on the mixer and it will simply ROtate.
+
+Immediate Qs:
+1. What's initial value of PC when computer starts?
+2. Who puts this value in PC?
+3. What is there at the initial location in the PC.
+
+Keep asking this Question - Which code is running on the processor. Who wrote it? Who placed that code in RAM, when and why.
+Which code ran before it. Which code can run after it.
+
+Few Terms: 
+BIOS (Basic Inpput Output system) - a program which is in-built into the hardware by manufacturer. Motherboard also contains ROM. ROM contains BIOS. This code is capable of communicating with Hardware Devices. It is a very basic code. Runs automatically when you start computer. It turns on the I/O devices.	
+
+UEFI: replacing BIOS
+
+Boot Loader - program that exists on (typicallu sector 0) of secondary storage. Loaded by BIOS in RAM and passed over control to. eg. GRUB
+
+Kernel - OS Kernel. Code loaded and given control by boot loader. Takes control of hardware. Creates environment for applications to execute. Kernel is what we study in this course.
+
+Everything that is not kernel code are applications. Bcoz we don't see the kernel.
+
+Applicatiions - System Programs(compiler,...) and Other APplications
+
+The BOot order:
+1) BIOS - Loads Boot Loader
+Hardwired into ROM on motherboard by motherboard manufacturer. This code is in machine language in the ROM. The PC contains address of BIOS code initially bcoz The Intel engineers(motherboard manufacturer) set this default value when system starts.
+Load - move from Secondary storage to Main Memory
+BIOS detects the Hard Disk. It sees the Boot order. If a particular Pen Drive has boot loader code on sector 0 typically then it loads the boot loader.
+
+2) Boot Loader - Loads OS(eg grub)
+3) OS - Loads initial application (init)
+4) Applications

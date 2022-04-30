@@ -1,0 +1,114 @@
+It is job of MMU(hardware) to detect memory violations.
+
+Static Linking: 
+Problem with Static linking is that, each C program will have separate standard C library code as a part of it.
+
+"stub" code - placeholder
+
+Using dynamic linker, the executable file is no longer bigger.
+
+PLT is a section in the ELF file.
+
+In Dynamic Loading, only the functions which need to be executed are loaded. For eg in the beginning only main() might be loaded and later as req functions can be loaded.
+
+The Dynamic Loader needs to understand Dynamic Linking, as the ELF file will contain Dynamic linking stubs!. So loader needs to understand dynamic linking.
+Why link-loader? - Bcoz at the time of loading, loader must perform linking.
+
+Holes in memory - free spaces in memory.
+
+External Fragmentation problem - the total free size is greater than required
+but no single hole greater than reqyured.
+
+Internal Fragmentaiton - Space wasted
+
+How small ? - Generally 4KB.
+
+Paging is an extension of the Fixed Partition scheme.
+Paging: Process is considered as a logically continuous chunk. However, physically its not continuos in RAM.
+size of page = size of frame.
+
+Page table is an in-memory continuous page table.
+
+From the page table, we get a frame number.
+
+Compiler assumes that process is stored in a continuous chunk in memory.
+Compiler can even assume that process is present from 0 address.
+
+Q. Do different processes have different page tables?
+
+Grey coloured blocks are free. The new process is saying that I need 4 pages.
+
+Global DS -> Free Frame List
+Process specific - Page Table DS
+
+Why 2 memory accesses? - One through the Page Table in RAM, One to the actual address.
+
+TLB:
+When address is issued, page number is searched first PARALLELY(constant search) into TLB.
+
+For TLB hit-> 1 memory access
+For TLB miss -> 2 memory accesses.
+
+TLB can be used like Least Recently Used, Least Freq used. The TLB updation is done entirely in the HARDWARE. The hit and miss also is done in the HARDWARE.
+
+miss ratio = 1 - hit ratio
+
+Q. How big is the page table in size? - Ans - Depends on the Process. Number of entries in the page table = Size of process / Page size. But here page table size varies from process-process.
+
+The valid, invalid bit can be used to detect memory violation. If address is given which refers to invalid bit, then it is a memory violation.
+
+In the PTE: Why don't we need All 32 bits for storing the Physical Page number? - Bcoz we don't have 2^32 pages!. If page size is 4KB, = 2^12, then we only need 20 bits to point to a page number. Bcoz there will only be 2^20 pages.
+
+Shared Pages diagram:
+Instead of allocating memory for library multiple number of times, we use paging. All process1, process2, process3 want to access the C library.
+
+The Kernel allocates only 1 instance of the library into the memory. Other processes will have the same mapping to the shared library as the process for which library was loaded.
+That's why on linux system, library is named as Shared Library
+
+Homework: goto /proc. Goto maps file for each process. Locate Virtual address for C library for each process. Deduce something from it.
+
+Major problem is that page table needs to be continuous in memory.
+One solution to the above problem is to increase the offset. Thereby we increase the page size. So the number of page table entries will be reduced. But this leads to more internal fragmentation.
+
+p1 p2 d
+p1 is index in 1st page table
+p2 is index in 2nd page table. Address of 2nd page table is taken from 1st page table.
+d is index in final physical memory. It's address is given by 2nd page table.
+
+PROBLEM: Each hierarchical level in paging, leads to 1 more memory access!
+
+Solaris contains Hashed Page Tables. 
+Basic Idea of hashing is to reduce search time by using a function which gives us an index.
+
+p is used as input to the hash function.
+With hashing scheme, there is a problem of collision.
+Here the chaining soln is shown.
+
+s is page number for q, r is page number for p.
+
+Motivation for Inverted page table.
+Process p1,p2,p3 all have different page tables pointing to physical RAM.
+Why not have a single 'Frame' Table which maps from the Physical Memory to the Process?
+- Frame - Physical Memory
+- Page - Virtual Memory.
+
+Instead of Page table, we have a frame table here.
+
+In the frame table, if we index with a Frame number, then we get page number
+
+This inverted page table is ONE GLOBAL table. No per-process table needed.
+Problem: Here we cannot use Index in the page table. As we have Page number with us, we don't have frame number with us.
+So we have to Search with a Page number and a PID!. Why PID? - Bcoz that particular page number will belong to only 1 process.
+
+The index of this entry is the Frame number!
+
+Oracle SPARC SOLARIS has 2 page tables. 1 for kernel and 1 for process.
+span = number of continuous free frames.
+
+TLB - present in all processors irrespective of Inverted page table or normal page table.
+
+Oracle SPARC has 3 level of hierarchy.
+
+If we don't have sufficient memory in RAM, we are not running all proceses at the same time! So some process can be removed and put into a Hard Disk.
+
+Process stack and heap also has pages.

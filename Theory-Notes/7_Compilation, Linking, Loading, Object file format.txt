@@ -1,0 +1,87 @@
+Standard C library is actually a machine/object code file containing the machine code of all these functions.
+It is neither source code/header file.
+On ubuntu: C library present at: /usr/lib/x86_64-linux-gnu/libc-2.31.so
+libc - library c
+
+Compiler - application program - to be specific a system program
+
+as is a popular assembler on linux
+tasm is also an assembler
+
+file.o contains machine code/object code/binary code of ONLY file.c Afterwards file.o is linked with C lib functions machine code.
+Linking - connecting code of a function to call of a function
+
+undefined reference to function f - means that linker is not able to find the machine code of f
+linker by default has the input of scanf, printf, etc functions. i.e. standard library functions. linker by default doesn't have input of math library functions, etc.
+
+Header files only contain prototypes. Code doesn't exist in header file
+
+What is the use of header files then?
+- In the compilation stage(before linking stage), compiler needs to know the function signature, so as to write machine code for CALLING the specific function. Remember that compiler only needs to write machine code for calling a function. Hence compiler needn't know the machine code for that function. So compiler only wants the function signature which is obtained from header file. It's the linker who needs the machine code of the functions so as to combine different machine codes!.
+- implicit declaration - compiler assumes some default function declaration - eg return type is int
+
+gcc -c : only till compilation
+gcc -E : preprocessor stage only
+    -S : assembly code
+    
+try:
+ps -eaf | less
+
+Try the math library function as sqrt()
+1. Do -c option to compile - no problems
+2. Try to link. gcc file.o -o file. What we get is an error: undefined reference to sqrt! WHy? - Bcoz linker doesn't by default read the math library object code!
+
+So do: gcc file.o -o file -lm   # l is library. m is math.
+
+Linker: /usr/bin/ld
+
+gcc doesn't assemble or link! It internally calls 'as' and 'ld'
+
+Implicit declaration of f - prototype not available to compiler
+Undefined reference to f - the machine code of f is not available to linker
+
+.o - output of a single C code file
+.so - (shared object) multiple C machine code files. Also contains extra information of a kernel. It is dynamically linked.
+.a - statically linked library file
+
+The gcc works for a particular processor. For eg gcc on my computer converts into machine code understandable by intel i5 processor.
+
+Linux kernel takes around 5 hrs to compile
+So if we write code in different files, compilation time is reduced, as we compile only the modified file.
+
+#include"f.c" is allowed. But it doesn't serve purpose. It means that the file to be compiled will become much bigger! As we are copying 1 .c file into another! So more time to compile
+
+Environment Created by OS - means fork() and exec()
+
+Normally compilation is automated by makefile
+
+EXE is not a format. Its a name of file. The format is actually PE.
+exec() on windows checks contents of executable file and also whether filename has .exe extension also
+exec() on linux doesn't check the extension. It just checks whether contents are in ELF format.
+
+a.out is JUST A FILENAME. It's no more a formaat. It's of ELF format
+
+objdump -D -x /bin/ls | less
+
+-D: means disassemble
+
+You can read the machine code of printf, scanf, getchar also using:
+objdump -D -x /usr/lib/x86_64-linux-gnu/libc-2.31.so | less
+
+We see the machine code of getchar(), etc!!!
+
+The loader is actually a part of exec()! Bcoz exec() has to read the file on hard disk and check if the file is of the ELF type as processor has to execute it. Hence each OS has its own executable file format. As kernel has to read and understand the executable file and give instructions to the processor to execute. So format is necessary
+
+Memory management features of processor - for eg stack pointer, IVT
+memory management architecture of kernel - OS decides to occupy memory based on memory occupied by processor.
+
+Cross-Compilation:
+xv-6 doesn;t have a compiler. So we compile on Ubuntu for xv-6
+gcc -m : we can compile for different processors
+
+Try this to check format of file:
+$file code.o
+$file /bin/ls
+
+gcc f.o g.o try.o -o executable -lm
+After above command, gcc invokes the linker and tells it to link g.o, f.o, try.o, math lib, standard C library to form an executable.

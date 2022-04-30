@@ -1,0 +1,125 @@
+What does the bootmain() c code do?
+It has struct elfhdr -> elf file has a format. So we read that using elfhdr
+This code does -> calls function readseg
+readseg - reads from disk into RAM.
+In the loop, information from kernel ELF file is read and stored at appropriate positions in the RAM
+For that we need to understand the structure of ELF file. Different features of ELF file are used at different times.
+
+entry at the end of the bootmain() is actually there in a assemblu file entry.S.
+
+Uptil now we have not enabled paging yet:
+goto bootmain() function in bootmain.c
+This function loads the kernel into memory
+
+xv6.img - concatenation of bootblock and kernel
+First there is a bootblock
+After a seek 1 is a kernel
+
+While running qemu, we passed xv6.img to it. That's why the code of bootmain is also passed to qemu.
+So the kernel code is only few sectors ahead of bootmain (!)
+
+ELF can be an executable file, kernel file, etc,
+
+Program header table is an array. It has offsets to different sections in the ELF file.
+
+uint magic: It identifies the file as an ELF file.
+uint entry - first instruction in the ELF file that should be executed
+uint phoff - program header offset - tells where the program header is present in the ELF file
+ushort phnum - number of program header entries.
+
+For each section - text,data,rodata there will be one program header.
+uint filesz - size of the segment in the file image. Size of text/data/rodata
+uint memsz - size of the memory in which that segment is loaded. - It can be the case that .text is only of 300MB, but it is loaded into memory region of 500MB.
+
+xv6 decided that kernel will get loaded in virtual address 0x8010000 which corresponds to a physical address of 0x0100
+
+Our kernel code can write to any address in the memory as we have setup the MMU in that way.
+readseg(pa, count, offset) - reads the count starting from offset
+in the readseg() code, 1 is added to the offset. So readseg(pa,4096,0) actually reads from the starting of the first sector where the kernel elf file is present
+512 is default sector size on any harddisk
+So count/512 times readsect() is called by readseg. As at any time 512 bytes are read.
+
+Data is available in the hard disk controller.
+elf->phoff gives the offset of program header.
+elf->phnum - number of program headers
+
+ph->memsz > ph->filesz     -  if memory size is greater than file size
+
+entry() -> is the code from Kernel. It is present in entry.S
+Now we are out of the bootloader.
+Kernel begins at entry - remember that we are still running without paging.
+
+Now we will read entry part of code in entry.S
+
+Figure out how big the kernel code actually is?
+Run objdump on the kernel elf file.
+
+In the next few lines of entry() we are going to setup only 1 page of 4MB.
+in the page directory, only 2 entries are filled - 0th and 512.
+512 * 4 = 2GB
+So logical 2GB address space is mapped to the first 1 MB page.
+
+Identity mapping means that Base=0 and Limit=4GB. So entire memory is available.
+
+We are  going to be setting only 1 4MB page frame. Both 0th entry and 512th entry will point to this 4MB page.
+We have already loaded the kernel in this 4MB page. Not at 0, but at 0x01000 (something like this)
+
+What is there in entrypgdir? - It is actually declared in main.c on line 103. It is actually an array
+entrypgdir is an array of 1024 elements. Each element is of 4 bytes. Out of it only 2 entries are being initialized.
+First entry is 0.
+Second entry is KERNBASE >> PDXSHIFT.
+KERNBASE is virtual address at which kernel is loaded.
+PDXSHIFT is 22 // 22 is actually the offset in the linear address given to Page Directory.
+
+Why do we need to map [KERNBASE,KERNBASE + 4MB) to [0,4MB], bcoz we have loaded the kernel in that way from bootmain.c
+While loading we have mapped the address 0x80100000 to 0x010000
+So we need to map the addresses of the C code to first 0-4MB Physical address
+
+As the offset is of 22 bits, if we shift the KERNBASE 22 bits to the right, then we will get page number corresponding to KERNBASE
+This KERNBASE>>PDXSHIFT comes out to be 512
+Now these 2 entries are set to point to 0th page, along with some flags.
+PS=1 means Page Size is 4MB
+
+Page Size Extension -> enabling 4MB pages
+Base addr of Page Dir is stored in cr3
+
+What is V2P_WO(entrypgdir)  ->
+Remember that entrypgdir is a part of the kernel code. So the address corresponding to entrypgdir in kernel ELF file is a virtual address wrt to the KERNBASE.
+
+V2P - Virtual To Physical
+V2P just subtracts KERNBASE from the argument. This gives us the actual physcial address
+
+movl $(stack + KSTACKSIZE), %esp
+KSTACKSIZE is 4096
+stack is present in the same file: entry.S
+
+.comm stack, KSTACKSIZE
+This .comm directive allocates a block of size KSTACKSIZE and the name of the block is stack.
+stack is actually of 4096 bytes.
+
+$(stack + KSTACKSIZE) means add 4096 to the address where stack is stored. Why to add those many bytes? - bcoz stack starts growing downwards!
+The stack pointer is being initialized once again.
+When was the last time we initialized the stack pointer?
+Why are we re-initializing the stack pointer again?
+
+$main is nothing but the address of main in main.c
+Now kernel will enter the world of C code.
+
+What is *%eax?
+If the code was jmp $main
+main is name of function in C code. Assembler while generating object code, uses the current PC as virtual address. to avoid this we use *%eax so that it jumps to a fixed virtual address.
+
+bootasm.S bootmain.c steps:
+3. Reads kernel elf file and loads it into RAM, as per the instructions in the ELF file:
+"As per the instructions in the ELF file" is important. Bcoz the instructions were present in the Program Header!
+
+There are 3 program headers
+How to interpret Program Headers
+
+LOAD off 0x00001000 vaddr 0x801000 paddr 0x00100000
+     filesz 0x00007aab memsz 0x00007aab
+    
+This tells that: load the contents of the ELF file at offset 'off' into the physical memory address 'paddr' and load 'filesz' number of contents. If memsz and filesz has some difference, then it is filled with 0s
+
+In the objdump, what u see at first 5 lines is the elf header
+later we have to program header.

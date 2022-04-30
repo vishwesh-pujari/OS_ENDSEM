@@ -1,0 +1,28 @@
+After make qemu
+Run ./usertests
+Entire code of usertests is in usertests.c
+Testing of the kernel is to be done by making system calls.
+Concept of permissions on file doesn't exist in xv6
+Conformance Test - to check whether kernel indeed conforms to its working
+Important convention about programs on unix and linux - if a program terminates successfully, then it should return 0. Otherwise it shouuld exit with a non-zero value. Those numbers are errno values.
+To get return value of a program on a shell:
+The parent can get the return value of the child. Return value is actually value returned by main()
+echo $? - gives return value of last command that was executed on the shell.
+
+How does a parent get the return value of the child? - using the wait system call. Wheneevr a program exits, it only exits through kernel using exit() system call.
+So in conformance testing, we expect the software to behave in a certain way. If it behaves in that way, we say that the test is passed, otherwise failed.
+
+What are some more tests that we can perform without modifying the C program?
+
+Why to write a C program and shell script separately to test? - In shell, no compilation is required. U just write and run a shell script. If C code was very very big, then testing the code by writing C programs, is very difficult task. So its better to write shell script to test.
+
+What all should get tested? - Test all arguments with all possible values of the arguments.
+
+Library functions set value of errno
+
+Write all possible test cases which test all possible ways open can be called.
+eg. 30 test cases can be written to test open() system call.
+
+Read 'man errno'
+
+link is a system call to rename a file.

@@ -1,0 +1,66 @@
+Virtual memory - de-facto implementation of memory in current OS
+Paging is extension of fixed size partitions.
+Virtual Memory != Virtual Address
+Setting up MMU is job of kernel.
+Virtual address is the addresses written by the compiler.
+
+Uptil now we assumed that code and data needs to be in memory for program to execute. But entire program is rarely used.
+
+Using virtual memory, actual program size can be larger than the physical memory.
+
+User logical memory - view of the compiler while generating program.
+eg. for 64 bit machines, compiler can assume that the program has access to 2^64 Bytes of memory.
+
+Less I/O needed to load or swap program - as program loaded in the memory is just a small part.
+
+Virtual memory can be implemented via demand paging or demand segmentation.
+Virtual memory is the view taken by the compiler.
+
+In the memory map, pages are mapped to Physical memory and also to The Backing store(HDD)!
+
+sparse address space - allocate only 1 page for stack and 1 page for heap initially. There are many holes. These holes can be used earlier to map dynamically linked libraries, etc.
+Now compiler also can assume that there will be holes available.
+
+Shared memory can also be implemented like shared library using virtual memory.
+
+sbrk() is a system call which asks kernel to allocates a region in Virtual memory and return a pointer to it.
+
+Demand Paging: Load page on demand
+Hence page which is not needed, won't be loaded.
+
+Page fault refers to raising a hardware trap.
+Page fault is one of the most difficult codes to write.
+
+Get empty frame - As kernel needs to load needed page here.
+Reset tables - reset page table to make it as "valid"
+
+One instruction leading to multiple page faults:
+eg add addr1, addr2
+So one instruction is causing 3 page faults, one for 'add' code, 2 more for accessing data.
+
+Q. What is locality of reference?
+
+CISC processors - can give complicated instructions like moving arrays.
+movarray 0x100, 0x110, 20
+
+Until page is being loaded, the current process can be sent to the waiting queue.
+
+Optionally there can be 1 I/O or 2 I/Os for loading a page into memory.
+1 I/O for reading a page is compulsory.
+
+If 1 access out of 1000 causes a page fault, then p = 1/1000
+Real challenge of demand paging system -> reduce page faults.
+
+Pages of parent are duplicated - means page frames are duplicated.
+vfork() shall only be used if child is immediately going to call the exec.
+Write a shell using vfork()
+
+In vfork(), kernel just copies the page table. This is actually not good, bcoz both processes need to have a different stack, heap, etc.
+
+Copy on Write - Only copy if being modified.
+
+Page table is an array/pointer in the PCB
+
+If we map code and shared lib on a swap partition, then we will have a duplication! As those already exist on the disk
+
+Pagable means - that is the table in memory all the time?, or we can optionally load as needed.

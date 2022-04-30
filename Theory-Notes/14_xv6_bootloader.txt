@@ -1,0 +1,196 @@
+Qemu has its own BIOS. The BIOS of Qemu loads the boot loader present on sector 0 of the disk which we pass to Qemu.
+We are going to see the Code which will load OS from HDD.
+
+xv6.img - image file of xv6
+The first sector of xv6.img is bootblock (bootloader must be present at sector0)
+the next sector is the kernel.
+See in makefile, xv6.img, bootblock
+bootblock.S and bootasm.c are the 2 files which form the bootloader
+Bios loads boot sector into 0x7c00 memory location in x86
+This 0x7c00 is documented by x86 and qemu.
+
+Read the Makefile : 
+xv6.img, bootblock part etc
+The start -Ttext 0x7c00 means that load the variable start in memory at 0x7c00
+start contains code of bootloader
+So it means load the code of bootloader at 0x7c00
+
+When bootasm.S starts, it sets cs to 0. Hence entire memory is available.
+.code16- assembler directive : no machine code generated for this
+start is a variable which is at 0x7c00
+
+cli instruction - clear the Interrupt Flag. This causes processor to ignore maskable interrupts.
+
+A not so necessary detail: Enable 21 bit address.
+In original scheme of segmentation, we had 20 bit address.
+In this part of code, we just enable the 21st bit.
+inb - IN instruction
+The set20.1 and .2 are just loops. 
+We can skip this part. As we don't need it.
+
+In x86, paging has 2 modes - one-level/2-level paging.
+In logical address, selector is implied if it is not explicitly mentioned.
+
+GDTR - Global Descriptor Table Register gives the location of Descriptor Table.
+OS stores the Address of GDT in GDTR.
+
+In basic Paging Hardware: Address
+
+Page Table needs to be continuos in memory. If physical memory is of size 4GB and Pages are of size 4KB, then Number of entries in Page table are 4GB/4KB. This is very large and probably that much continuous space isn't available. So to avoid this multilevel/hierarchical paging is done.
+The address is divided into those many parts. In 2-level of paging, address is divided as p1p2d.
+x86 allows us to choose betn 2 level and 1level paging. for 1level paging, the size of memory page is larger - 4MB. For 2level paging the size of memory page is smaller - 4KB.
+
+For 2level paging, CR3 register gives the address of Page directory(1st page table) and then in the Page Directory we get address to be indexed in Page table.
+For 1 level paging, 22 bit offset is used. Hence memory must be 2^22 which is 4MB.
+
+For xv6, we are not going to use 4KB page(2-level paging). We are only going to use 1 level paging.
+
+Page Directory and Page Table are in memory tables.
+CR3 gives the base address of 1st page table(i.e. page directory)
+Ignore CR4 table for now.
+
+The address bits given to Page Directory are 10
+therefore 2^10 entries are there.
+Each entry is 4 Bytes
+So Page Directory fits in 4KB
+
+Each Entry in Page Directory points to a Page Table. There are multiple Page Tables!
+The next 10 bits in linear address are used to index into that particular page table whose address is given by the Page Directory.
+
+IMP: The job of the kernel is to:
+Set up GDT, store appropriate value in GDTR
+Set up the Page Directory and Page tables. Fit the address value in CR3 register.
+After kernel loads all this, all address translations/violations are handled in hardware! Kernel doesn't need to do anything.
+
+xv6 sets Base to 0 and Limit to 4BG in all entries of GDT!
+So segmentation is off. It means all segments begin at 0 and occupy 4GB. And in 32 bit, max addressable memory is 4GB.
+In GDT table, the base and limits are splitted. Some bits here and some bits there.
+In protected mode, the Segment selector is interpreted in different ways. lower 3 bits are used for different things. It is actually only a 13 bits entry.
+Now x86 has 2 kinds of tables - GDT and LDT. xv6 only uses GDt.
+
+Now read line numbers 42-52 of bootasm.S
+
+gdtdesc:
+	.word 
+	.long
+This means that gdtdesc is actually address of an array containing the data of 2 bytes and 4 bytes!
+
+start:
+	mov
+	add
+	mov
+This means start is a pointer to the object code of mov,add,mov...
+So in assembly we can see that code and data are residing together
+
+lgdt gdtdesc    -   load the GDT register with gdtdesc
+What is gdtdesc? - Go down and search for gdtdesc:
+.word - 2 bytes
+.long - 4 bytes
+gdtdesc is a 6 byte data. - this data is stored in GDT register
+gdt: is the gdt table
+
+SEG_ASM(STA_X|STA_R, 0X0,0XFFFFFFF) - This block of data has executable and read permission. from 0 to 4GB. // so we are disabling segmentation
+
+gdt is actually an array of 3 entries
+lgdt gdtdesc will load the address of array of 3 entries whch is the gdt into GDTR.
+So now GDTR points to the GDT table.
+Now with this primitive setup, kernel will start running. Kernel will have access to all the memory here;
+movl cr0, %eax means copy cr0 to eax
+The last bit of cr0 is effectively made 1 by using the 3 lines
+
+ljmp a, b
+does this : CS = a, IP = b
+SEG_KCODE = 1
+1 is left shifted by 3 in the Code Segment. Why are we doing left shift by 3?
+Bcoz there are 3 bits in the segment selector which are not the actual data. So now we stored 1 in CS.
+Why did we store 1 in CS?? ANs - Remember that in protected mode, The segment registers are an index into the GDT.
+In the GDT, at index 1, the actual Base+Limit for Code Segment are present!!
+Hence we are putting 1 in the code segment
+
+In assembly language, code and data can be present together!
+
+$start32 is the address of the code starting from start32.
+As after start32, code is present, start32 gives address of the code.
+After gdt: we had some data present, so gdt is giving address of data
+so in assembly depending on what is stored after the label, it either gives the address of code/data.
+
+SEG_KDATA means value 2. Why are we storing the value 2 in ds?? - Bcoz DS will be an index in the GDT. at index 2 in the GDT we have actual Base+Limit of DS.
+We left shift SEG_KDATA by 3 bcoz the structure of segment registers is like that in Protected mode.
+
+movl $start, %esp
+means 7c00 is stored in stack pointer.
+stack pointer grows downwards
+Above 7c00, code of bootloader was present
+So below the stack will grow!
+Why do we need  a stack?. Bcoz we need to call bootmain
+What is bootmain? - bootmain.c -> Now we are in the world of C
+The call of bootmain and the code of bootmain was already linked in the Makefile.
+Now the C functions that will be called in bootmain() will work on the stack that is growing downward from 0x7c00
+
+Now we are reading C code. So now we are in the world of calling convention. So code of bootmain.c is compiled using calling convention
+
+bootmain.c will read the kernel code from the disk.
+
+Different permissions are there in the GDT are there bcoz there are some areas where we don't want overriding. For eg if code is present in some segment, then we don;t want to overwrite. So hardware will now check for read write protection also.
+
+Real mode - processor runs as 16 bit
+So the address is to be generated by segment register + offset register
+
+We are going to read the code of bootasm.S
+There is another file : bootmain.c
+
+We will learn how bootasm.S loads the kernel
+# - comment
+
+.code16 - tells assembler that machine code is to be generated for 16 bit register
+
+.globl start    - jump to start
+
+start must be present at 7c00
+By default 21st bit is disabled in all processors
+inb - IN instruction
+Now protected mode - 32 bit mode starts
+
+x86 uses both segmentation and paging
+
+x86 address translation:
+offset is given by the CPU
+The selector is implied. So for sp, ss is implied.
+selector - ss,  cs, ds
+
+The descriptor table is in memory. It contains Base and Limit pair
+In x86 we have 1 and 2 levels of paging
+CR3 register gives location of page directory
+
+PDE - Page Directory Entry
+xv6 turns every Base and Limit to 0 and 4GB respectively to turn off segmentation and effectively only using Paging
+
+GDT - Global Descriptor table
+
+lgdt gdtdesc
+gdtdesc is a label in the same file
+SEG_NULLASM is present in asm.h
+
+These macros(SEG_ASM) are generating a GDT Entry having a format specified in our ppt
+STA_X - memory segment is executable
+STA_R - memory segment is readable
+0xffffffff - is 4GB
+
+lgdt gdtdesc  -  load into gdt register, the address given in gdt descriptor
+
+For FS and GS - limit is 0
+
+movl $start, %esp means move 7c00 into esp
+so from 7c00 to 0 memory will be available for function calls
+
+We are in the world of C, means we are in the world of calling convention
+
+The only effective code in bootasm.S is from lines 42-51. Here the gdt table is set properly.
+
+ljmp means long jump
+
+Shifting (<<3) is done bcoz the format of the register is like that.
+
+We can access any address in bootmain.c bcoz the gdt table has been set like base = 0 and limit = 4GB. So entire memory belongs to us
+
+insl - copies multiple bytes one after another

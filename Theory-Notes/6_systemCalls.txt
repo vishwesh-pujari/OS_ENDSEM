@@ -1,0 +1,63 @@
+man syscalls # to see all system calls. These calls are available through C library.
+
+Different OSes give different SYstem calls.
+eg open() on linux, CreateFile() in Windows
+So how to write a C program which is machine independent?
+Soln - POSIX (Portable OS Interface). POSIX gives specifications to be followed by OSes.
+If a OS is POSIX compliant, then the POSIX system calls compile on all systems. Linux, MacOS, WIndows are POSIX compilant
+But xv-6 is not POSIX compliant.
+
+Compilers allow Assembly code to be mixed with C code.
+write() function is actually a C lib function. write() function code does the system call.
+System call - INT80. The value is present in EAX register. Depending on value, a specific function is invoked.
+OS kernel can read CPU registers, as assembly code can be written in C lang. So we can read registers.
+
+./a.out - Program becomes a process(code, data now exists in the ram)
+fork() - duplicates a process. Creates exact duplica of the current process. These processes run independently of each other
+Caller process is parent, Created process is called Child.
+
+fork() returns 0 to the child process, and returns pid of child process to parent process. If child process isn't created then fork() returns -1 to parent and errno is set to indicate the error.
+No order of execution guaranteed betn parent and child. The order of execution can get intermixed.
+
+$/usr/bin/ls - also executes ls
+
+execl() - takes pathname of the executable file.
+after execl(path) - OS overwrites in memory image of the currently executing process by the code of process pointed to by path.
+currently executing process is vanished from memory. exec loads the new process.
+Therefore exec doesn't return. Becoz the program in which it should return has vanished!
+exec returns if there is some error in loading the new process/ if there is invalid argument.
+After execl there is only 1 process running
+printf("hi");
+execl("/usr/bin/ls", "/usr/bin/ls", NULL);
+printf("bye"); // doesn't execute. This process is removed from ram.
+
+In above program, pid of ls remains same as pid of caller of execl
+
+thread vs fork() - fork() creates duplicate process., thread is a part of a process.
+
+If a process contains 2 threads, and then how does fork() create a duplicate process? - Ans is pending!
+
+wait(0) is a system call. waits until child terminates.
+
+In the shell program, that sir has written, write commands like /usr/bin/ls, /bin/mkdir as the directory is not handled properly while giving to execl.
+In our assignment we have to handle directories. So user can write commands as ls, mkdir and we have to manipulate directories and pass to execl.
+
+Try:
+$ps
+$ps -eaf
+
+ANY PROCESS CAN BE CREATED ON UNIX/LINUX only using fork() + exec() except the init process. There is no other way of creating a process.
+pid - process id
+ppid - parent process id(t)
+
+Try:
+In a C program: After fork() write: sleep(20) (maybe write 2 forks, write sleep after each)
+And goto another terminal and type: ps -eaf | grep fork
+Where grep fork is written, as the program was started as ./fork
+
+In the ps -eaf output, see the pid, ppid of the number of processes created. you can see who's the parent of whom.
+Also try this with execl("./myprogram"). Inside myprogram write sleep, so that we can see what's the pid of myprogram and its parent program. See who's its parent program!. Try this with fork() + exec(). And see whos parent of whom
+
+Also check that, the first ./a.out process is started by bash. Check the ppid of ./a.out. That is same as pid of bash!.
+
+Try these 2 programs and paste in this folder.

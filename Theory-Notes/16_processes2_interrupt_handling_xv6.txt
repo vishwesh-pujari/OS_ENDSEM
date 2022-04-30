@@ -1,0 +1,145 @@
+xv6 uses segmentation + 2 levels of paging.
+On a trap, we transit from user mode to kernel mode
+
+The 3 stacks are present in xv6 code.
+The global kernel stack is used when the kernel is executing on the kernel's behalf. i.e. the system context. This stack is the global stack
+The per-process kernel stack is used when kernel is executing on behalf of user program;. User program means application program.
+
+The current privilege level is stored in 2 bits of the Code Segment Register.
+
+In x86, int 10 means "make 10th hardware interrupt". So we are generating hardware interrupt using software interrupt(int)
+
+xv6 uses number 64 for actual system calls
+Linux uses int 0x80
+
+In protected mode, the segment registers are used as index inside the GDT.
+
+System call interrupt means the software interrupt.
+IDT is an in-memory table.
+
+Goto xv6 code directory
+$cscope
+
+Search for gatedesc in Global definition. 
+see struct gatedesc in mmu.h
+gatedesc is a C structure for the Gate entry in IDTR.
+
+in gatedesc: we have cs and off
+uint cs: 16 means cs is of 16 bit size.
+uint dpl: 2 means dpl is of 2 bits.
+Kernel has to put such gate descriptors in IDT array
+
+Now go to tvinit function in trap.c.
+This tvinit function is called from main(). main is the kernel initializer function.
+256 is the size of the idt table. idt is an array of struct gatedesc.
+
+SEG_KCODE<<3 is done so as to set CS to 1(as SEG_KCODE has value of 1). the left shift by 3 is done bcoz the CS register has lsb 3 bits occupied for some other purpose.
+vectors[i] is address of function to be exectuted.
+WHat is there in vectors[i].
+
+extern uint vectors[] : extern means vectors[] is a global variable but is defined in another file. 
+Linking not only means linking call of a function to code of a function, but also to link a variable with its reference in another file.
+
+vectors[] array is present in vectors.S assembly file.
+
+T_SYSCALL is actually 64. Entry number 64 is actually being overwritten! Only the Second field is 1, and last field is DPL_USER.
+
+2nd field in SETGATE is istrap. 
+last field in SETGATE is dpl
+
+see dpl in gatedesc: dpl actually means the privilege level. It is 0 or 1
+and DPL_USER is 0x3. WHich means that the 64th entry in idt has privilege level of user!
+
+Open vectors.S file. Search for the array called vectorr on line 1280
+
+vectors:
+	.long vector0
+	.long vector1
+	.
+	.
+	.
+What this means is that vectors is an array, and .long vector0 is actually the 32 bit address of vector0
+vector0,1,2... are interrupt handlers
+These interrupt handlers are pushing 0 first, then they are pushing their particular number. And then code jumps to alltraps.
+
+CPL - Current Privilege Level
+DPL - Privilege level in the CS register:
+%cs <= DPL means it is checking if we are jumping to a lower privilege level.
+
+Load %ss and %esp from a task segment descriptor. 
+We basically have to run code of the kernel on an interrupt. Hence we have to load ss and esp for the kernel. So task segment descriptor gives us these values of the kernel. During initialization of the kernel, this task segment descriptor was setup.
+TS descriptor - task segment descriptor.
+
+See on slide number 23 of xv6 processes and trap handlers:
+
+push %ss
+push %esp
+push %eflags - flags register
+....
+
+This ss, esp, eflags are basically the registers belonging to the process who generated the interrupt. And these registers are being pushed on the kernel stack!.
+
+All these tasks are done on an interrupt by the HARDWARE!
+Set %cs and %eip to the values in the descriptor : Now we will start executing the actual code of vector0, vector1...
+
+The ss,esp,eflags,cs,eip is pushed by hardware
+The 0,64 are pushed by vector64
+This 0 is pushed for storing error number later
+System call has to return an error number
+64 is pushed so that alltraps understands which trap number is being executed.
+
+struct trapframe is in x86.h
+The variables in struct trapframe are in the reverse order as the kernel trapframe!
+
+In struct proc -> we have the pointer trapframe
+The struct proc also contains kstack(kernel stack) pointer. This is the kernel stack that we switched to on the interrupt.
+
+SEG_KDATA is 2
+In the assembly code we pushed the esp first and then we called trap!
+ANd in trap(struct trapframe* tf) function the argument is a pointer.
+So according to calling convention, the tf now points to the esp! So now tf can access all the elements in the trapframe.
+
+So using the assembly code, we constructed the trapframe on the kernel stack.
+
+Now we are in the trap() function
+syscall() is generic function to handle all system calls. syscall() checks the eax register
+ideintr means hard disk interrupt
+
+Who set this trapno?
+trapno was pushed on the trapframe by vector
+
+When trap() returns, we come into assembly code
+popal
+popl gs
+..
+are the reverse of the pops that were done before
+
+int pushes 5 values. iret pops 5 values.
+iret reloads the ss and esp with the old values. Now we switch back to the user stack. The CS, Ip are also reloaded. So now we are into our process.
+
+Q. WHy did we create the entire trapframe in assembly and not in C?
+  - Bcoz there is no way of doing it in C. 
+Trapframe is essential info needed to handle a trap.
+
+Interrupt only happens after the end of 1 single instruction. Interrupt doesn't happen during the execution of an instruction.
+
+Race condition - multiple concurrent pieces of code trying to change a variable.
+
+The compiler only plays with the general purpose register. Compiler doesn't touch esp, ss, etc.
+
+The code of functions like printf() is present in file like printf.c. But where is the code of system calls like open, read, write?
+
+Go to the file usys.S. There we can see the macro named SYSCALL. It expands the names like fork, exit into a certain piece of code. The gas(GNU assembler) also supports macros. The SYSCALL macro basically calls int 64.
+WHat happens after INT 64?
+
+movl $SYS_ ## name, %eax
+SYS_ ## name is concatenation
+if name is fork, then it is SYS_fork
+See what is the value of SYS_fork
+The argument is copied into eax
+
+On int, we jump to vectors.S
+We will goto vector64
+Then we will goto alltraps
+Then we call trap()
+From trap(), if our call is system call(64 value) then syscall() function is called.

@@ -1,0 +1,128 @@
+Know more and more bash commands to do better shell programming.
+Also knowing how to combine different commands is important
+
+Some features of the bash shell:
+
+1. Shell Wildcards
+a. ?(question mark)
+	Any one character
+	a?c means a followed by any character followed by c
+	ls a?c
+	ls ??c
+b. *
+	0 or more number of characters
+	echo * - * matches every filename in current directory
+c. []
+	Matches a range
+	ls a[1-3].c means a1.c, a2.c, a3.c anything will match
+d. {}
+	ls pic[1-3].{txt,jpg}
+	Matches pic[1-3].txt or pic[1-3].jpg
+	
+Bash shell BEFORE executing the command, checks all these wildcards and modifies the argv before doing the exec.
+
+2. Shell variables:
+j=5; echo $j
+All variables in bash are strings. j=10 doesn;t mean the number 10
+No space in j=5
+
+set command shows all variables that are set right now
+set | less
+
+a=10; b=20; echo $a$b (concatenation of a and b is done before passing to echo)
+
+Shell's predefined vars:
+
+USER
+	- Name of current user
+HOME
+	- Home directory of current USER
+PS1
+LINES
+HOSTNAME
+OLDPWD
+PATH
+$?
+
+Redirection: Inter-process communication
+
+1. Output redirection
+	cmd > filename
+	Redirects output to a filename
+	
+	eg ls > file
+	The output refers to stdout. means functions like printf(), ...
+2. Input redirection
+	cmd < filename
+	The command reads its input from file
+	The input here refers to stdin.
+	stdin means input from scanf(), getchar()
+	Reads input from file instead of keyboard.
+
+Pipes:
+
+last | ls
+grep bash /etc/passwd | head -1
+
+Connect output of LHS command as input of RHS Command
+Output refers to stdout and Input refers to stdin
+
+cmd1 | cmd2 | cmd3
+
+Concept of Filters: Filters are programs which read input ONLY from stdin (keyboard, eg scanf(), getchar) and write ONLY on output,stdout (eg. printf, putchar)
+Programs can be connected using pipes if they are filters!
+
+Most unix/linux commands are filters
+
+The test command:
+test 10 -eq 10
+test "10" == "10"
+test 10 -eq 9
+test -f "filename"
+
+After running test, it doesn;t print anything. Check the $? value. 0 means true. 1 means false.
+
+Shortcut notation for calling test:
+[]
+[ 10 -eq 10 ] - the spaces are compulsory
+
+Write $[ 10 -eq 10 ]
+Check echo $?
+
+The expr command and backticks
+
+expr 1 \* 2    - we have to use \ with a * bcoz, * means wildcard by default.
+
+Backticks `` capture output(stdout) of a command
+v=`ls`
+
+Bash is also capable of using if then else
+
+We can use ; to separate shell statements.
+echo $a; echo $b    - combine 2 different statements on a single line
+
+In shell
+0 - TRUE
+Non zero - FALSE
+
+Exactly opp to C!
+
+if ls: then echo hi; else echo bye; fi
+
+So if ls has return valiue of TRUE(0) then echo hi!
+
+while do done
+
+In bash: we can either separate statements based on newline or ';'
+
+for x in ... do done (this ... is a list)
+
+for i in {1..10} do done
+for i in * do done
+
+case ... esac
+
+grep .... | head -3 | tail -1
+
+The Golden Mantra - Everything can be done from the command line
+Command line is far more powerful than GUI

@@ -1,0 +1,43 @@
+We are going to see how to find free frames in this lecture.
+Select a page for replacement in such a way that in future minimum number of page faults related to that page occur.
+
+Dirty bit is set by the hardware automatically into the PTE.
+from struct proc, there is a pointer to page directory, from page directory, pointers to different page tablese are there.
+
+2 page transfers for one page fault - maybe one page transfer for transferring the dirty page, and another page transfer for taking in new frame.
+
+String is a sequence of page numbers
+
+In the FIFO algorithm example,
+There were page faults for 7,0,1
+For page number 2 there was a page fault and also a need to do replacement.
+
+Belady's Anomaly - In the middle, the number of page faults is increasing from 3->4.
+
+In optimal page replacement algorithm, we look into the future to see which page is accessed after longest time. But how do we look into future?
+
+LRU - looks into the past.
+Disadvantage with LRU -> A time has to be stored with each page. And kernel needs to search the entire page table to find a least recently used page.
+
+LRU stack implementation: On the top: most recently used
+			On the bottom: least recently used.
+
+Stack Algorithms - It is a category of algorithms. These are not related to LRU stack implementation.
+
+Hardware sets the bit to 1 when page is referenced.
+
+Why the name clock algorithm? - bcoz clock runs in a sequential manner.
+Why the name second-chance ? - bcoz hardware marks 1->0 saying that if next time you don't become 1, I will select you!
+
+LFU is problematic bcoz assume that a page has just been used recently and its count is 1. Assume that 1 is the minimum count in the cache. So, LFU is going to replace this page. But this page might be accessed a lot many times in the future.
+
+Pool of free frames - Whenever there is a page fault, A frame is availabele..
+
+Page buffering algorithms - attempt is to spread the writes. Writes are not done immediately on page faults.
+
+Double buffering - eg. we open a file, read data in an array. The file data also present in buffer cache and also in the application data.
+OS can give special system calls to applications like Databases. Using this, Kernel doesn't to buffering.
+
+Fixed allocation - fix formula for allocation.
+
+priority allocation - steal a frame from a lower priority process.

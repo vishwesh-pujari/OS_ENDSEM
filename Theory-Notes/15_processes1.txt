@@ -1,0 +1,115 @@
+Processes - Third Chapter
+Kernel has to maintain data structures for maintaining processes. - Bcoz it's the kernel's job to allocate memory to a process.
+Every process has its own list of opened files. That has to be maintained for each process.
+
+"waiting" for different events - waiting for hard disk controller to read/write data or waiting for data to arrive on network.
+There is one PCB(Process Control Block) per process. It is identifier of a process.
+PID - unique number that identifies a number
+
+Why to store register values in PCB? Bcoz multiple processes are time sharing the CPU. So the PCB must save current processes's Registers.
+Memory limits of process - means the memory management information for the process
+
+fd[] : Array of pointers to struct File
+The first NULL pointer in the fd[] array is selected to point to struct file
+So file descriptor is the index in the open files array of PCB
+
+When we open(), normally the first fd which we get is 3. Bcoz the current process is already initialized with 0,1,2 as stdin,stdout,stderr. File numbers 0,1,2 are already open for our process.
+
+The PCB is the part of the kernel's memory space.
+In xv6 the pcb is represented as struct proc
+
+struct file : uint off means offset. at this offset, the next read and write will occur
+
+in xv6 the list of processes is given by:
+struct {
+	struct ..
+	struct proc proc[NPROC]; // here the name of array is also proc and structure is also proc
+}ptable;
+ptable is a global variable.
+In xv6 the only data strcture for processes is this ptable. That's it.
+So in xv6, processes which are on hold, which needs to be scheduled are all present in the ptable struct. So scheduler needs to do more work in xv6
+
+Go to sched.h in Linux Kernel and see the struct task_struct. It's a HUGE structure.
+struct List head just has pointers of the same type.
+In linux kernel, the processes are linked together through internal pointers!
+In linux kernel, they link the internal members of the structure together
+
+Time slice expired means timer interrupt occured
+
+Moving a process to a Wait Queue means moving the PCB of that process into a Queue!!
+
+Child termination wait queue   -   Means list of processes who have called a wait() system call!. The parent will wait until child terminates.
+
+New State - Fork has happened just now. PCB is being constructed. Afterwards PCB is moved into the Ready Queue.
+Ready State means - Scheduler can select the process for executing on CPU
+After Scheduler picks up the process, it changes the State to Running.
+Any process must exit by calling exit() system call
+exit() will clean up the PCB bcoz exit is a system call, and the last line of exit() will call the scheduler to schedule !
+
+To call a exit(), process must be running.
+
+Remember that PCB is present in the kernel data structure. This PCB is not same as the Code,Stack,Heap available to the process!
+
+See in the Conceptual Diagram: Process which is waiting cannot terminate.
+What is not shown in this diagram is not possible!
+
+Pressing Ctrl+C generates a signal. Signal is also handled similar to interrupts.
+When Ctrl+C is pressed, That ctrl+c goes to kernel, and then kernel will notify the process that the signal has occured. And the process's own code called the signal handler will run. But if not then kernel runs its own default signal handler. Terminate the currently executing process. Note that here the kernel terminated the process, and not exit()!. Individual programs can also write signal handlers.
+The state diagram which is shown in the slides, is the state diagram of a process running by its own process code. It doesn't show how process behaves on a signal/segfault
+
+What happens to the return value of the process, when Ctrl+C is pressed?
+When a process is terminated, it hasn't returned. Bcoz return value means value which is received after the function returns. So after pressing ctrl+c the return value which we get on the shell (echo $?) is 130.i.e Owner Died.
+
+Always remember that __asm__("int 0x80") means generating an interrupt. After generation of an interrupt, The OS code will run! So when we call read(), the kernel will come to know that the current process is trying to do a read(). Hence kernel comes to know that we should move this process to a wait queue.
+
+disk_read() will keep executing in hardware!! So the reading, writing on files keeps on happening in the hardware parallely. disk_read() is not blocking.
+When interrupt occurs, the scheduler will run to schedule next process. In the triple dots shown in Context Switch Diagram, the kernel context is being executed. i.e. the kernel code is using the Registers.
+So actually in the Diagram there are 2 context switches. One from the process to kernel. One from kernel to another process.
+
+Calling Convention makes function calls work in the same process.
+
+Code for context switch must be in assembly. This is bcoz if we write it in C, then the code will be in some function according to calling convention. Hence we don't write in C.
+
+Now we start reading xv6 code.
+
+Meaning of Layout of process's VA Space - THe compiler, linker will create code for the process assuming the LAyout which is shown. So compiler assumes that data will be present at address 0, then User data is there and so on.
+
+KERNBASE = maximum possible memory available to a program. = 2GB in xv6 - 0x80000000
+
+It is assumed that Kernel itself is present from KERNBASE onwards.
+The mapping that is shown is for kernel part only.
+
+2GB is for Processes, 2GB is for kernel
+
+When a process is forked, then a mapping of User stack, User data, Kernel Data, Kernel text everything must be mapped to physical pages.
+
+0x8000000 - 2GB
+
+In xv6 every process has 2 stacks
+Kernel stack - present for every process. Note that kernel stack is present in the PCB. So kernel stack is present in Kernel part of memory.
+User stack is present in user process memory space.
+
+Kernel stack is used for running the kernel code on behalf of the kernel.
+Kernel and apllications have different stacks so that no clever programmer tries to get pointer to a kernel executing function.
+There is a third stack also! But this stack is not a per-process stack. It's just a genetic stack.
+
+Process has to be less than 2GB in xv6
+xv6 has 2 level paging. the pde_t* pgdir gives a pointer to the page directory for a process. This pointer later goes into the CR3 register while scheduling.
+
+context - gives address of structure where the context of the process is saved.
+
+The pgdir has mappings from 0-4GB. The page directory and different page tables are set up when fork() is done
+
+Trap means interrupt.
+The argv are stored on the stack, when exec() is called.
+
+All the page directory and page tables are present in the Free Memory section of the kernel. See the diagram.
+
+When does a kernel run on behalf of a process? - When kernel is doing system call.
+xv6 does 2 level of paging.
+
+To read Kernel code, understand the data structures first.
+
+struct .. {
+	uint off_15_0: 16; // means that the variable is of 16 bits.
+}

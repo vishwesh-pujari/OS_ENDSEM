@@ -1,0 +1,89 @@
+Download xv6 code from github
+
+Single User - no concept of root user, as there is a single user
+Code for xv6 that we will see is for x86 processor
+It has a small code: 7k-10k lines of code
+Linux Kernel - 40 Lakhs line of code
+xv-6 is developed by MIT researchers for studying OS
+
+To read xv-6 code: use cscope and ctags with VIM
+
+call graphs - has functions has vertices and function calling another function as edge
+Design of OS - 2 approaches - microkernel and monolithic kernel
+
+What is monolithic approach - kernel actually is structured in multiple layers, where each layer does its job. eg File system layer, System call layer. all layers talk with each other. Kernel part is big
+
+microkernel - keep kernel as small as possible. Code provides only basic services. Handling files, hardware devices has to be done on top of kernel. Kernel part is small
+
+Find which OS kernels today are microkernel and monolithic kernel.
+
+git clone the xv-6
+go in the folder
+
+Run 'make qemu'
+
+xv-6 OS will load, it will start init, init starts shell
+There is multiplexing of screens happening in qemu.
+
+With qemu-system-1386 command, qemu started executing OS. Find this command during compilation.
+
+fs.img - image of the file system
+xv6.img - image of the kernel
+
+cat.c, echo.c,....zombie.c are not a part of xv6 kernel code. They are applications to test xv6.
+
+Certain parts of kernel code are written in assembly.
+kernel.ld contains instructions to linker to create executable. This executable is not same as our C executable. It has to be different. As it is an executable which needs to be loaded by boot loader. 
+mkfs used to create formatted disk
+
+objdump reads contents of elf file and shows disassembly
+
+_ls, _cat are executables for each application.
+
+xv6.img - xv6 kernel + shell + cat + ....
+
+See about dd command. 3 dd commands are used to create xv6.img
+
+/dev/zero - infinite length files containing all 0s
+
+xv6.img is concatenation of bootblock and kernel. It is created using 3 dd commands
+
+About dd command
+dd if=file1 of=file2 bs=8000 count=250
+dd reads from file1 and writes to file2. bs=8000 means read chunks of 8000 bytes and read 250 such chunks. So total read 250*8000 bytes.
+If bs is not mentioned, then default chunk size is 512 bytes.
+
+If the count is not specified, then dd copies the entire input file
+
+dd if=/dev/zero of=xv6.img count=10000
+This creates a xv6.img file completely of 0s of 10000*512bytes
+
+dd if=bootblock of=xv6.img conv=notrunc
+This means that don'e truncate the file, overwrite the starting 512 bytes of xv6img by bootblock
+
+seek=1 means don;t overwrite the first 1 block. Copy from the second block of 512 bytes
+
+xv6.img is a concatenation of bootblock, kernel followed by some 0s
+fs.img is another disk file. it contains user programs and README
+qemu is given both xv6.img and fs.img. qemu runs with 2 hard disks.
+
+Symbol table - listing of addresses and the corresponding variables.
+
+kernel code executes asynchronously.
+
+See sh.c file in xv-6 to understand how the shell is written in xv-6
+
+int $T_SYSCALL is int 64
+
+There is no C library in xv-6. Whatever we need, we have to build ourselves there.
+
+To compile programs for xv6, we have to compile them on Linux for xv-6. So we cannot use the Standard C library on Linux to link with the xv6 code.
+
+We have to use ulib.o, printf.o, umalloc.o to link out code with library code.
+
+But mkfs is not linked with utility files like ulib.c etc, but linked with Linux C library.
+
+Start playing with xv6. Understand the compilation process in make.
+Read output of make qemu command and understand each and every line.
+
+Why can't we use the C library on Linux to link programs for xv6? - Bcoz the C library on linux has machine code for Linux OS. We want machine code for xv6!

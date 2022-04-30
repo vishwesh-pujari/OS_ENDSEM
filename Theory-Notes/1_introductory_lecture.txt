@@ -1,0 +1,11 @@
+We will focus on Unix-like OS architectures.
+OS means course on Kernel. Kernel is the piece of Code that connects hardware + software.
+OS = Kernel + Compiler + Loader + Linker + Shell. 
+Shell is not a part of kernel.
+
+In an era of "Data Science" why study "Operating Systems"?:
+Fashion is temporary, class is permanent! Technologies keep on changing, core courses are constant.
+
+DO NOT neglect any core course in Computer Engineering.
+Veritas, IBM, Microsoft, Amazon(AWS), Oracle, VMWare, Intel, HP, Honeywell offer OS Jobs.
+Cloud is Advanced Operating System problem.

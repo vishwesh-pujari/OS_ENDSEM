@@ -1,0 +1,72 @@
+Topic-Wise QUizzes - Will test concepts. Not analytical. Quiz1, QUiz2, End sem are more challenging.
+Topic: Event Driven Kernel
+OS Kernel is an event driven program
+Understanding Hardware Interrupts:
+What happens when we press key on keyboard?
+1. Keyboard sends Interrupt to CPU
+
+Something is happening in Hardware means - eg CPU is doing its own task(fetch-decode-execute) and parallely it gets an interrupt.
+
+The BIOS also has ISRs. These are called as BIOS ISRs. They are different from OS ISRs.
+The ISR is a part of the OS. When boot loader loads OS, it also loads ISRs.
+
+While using boot loader, we press keys. How do these keys get detected? Which ISR runs at that time? - Ans: ISR of BIOS or BOot loader.
+
+OS takes control of hardware means - whenever Hardware interrupt occurs, OS code will be executed. So the OS ISRs will occupy the predetermined locations which get executed when hardware interrupts occur. This is meaning of OS taking control of hardware.
+
+All commands ls, mkdir are application programs. They exist as executable files.
+
+One program can run as multiple processes. WHat does that mean?
+- eg. when vi opens 2 files at the same time parallely.
+
+Question:
+Multiprogramming System may not be multitasking
+Multitasking system must be multiprogramming
+
+OS code only executes in instances like Hardware Interrupts, Software Interrupts, Exceptions. It doesn't run normally. Hence it is event driven.
+
+OS is not "always" "running" "in the background"!
+1. Always - CPU is not 'always' executing OS code.
+3. in the background - It is a concept in the application world. In the hardware there is no notion of background
+
+Software Interrupt instructions - Changes the mode bit from user mode to kernel mode.
+
+scanf() runs INT instruction. This INT instruction is a system call.
+
+scanf("%d", &i) -> The OS will first run some part of scanf() in user mode. WHen INT instruction comes, it goes to kernel mode
+The OS will copy data from keyboard to the memory location of i.
+
+CPU constantly checks the mode bit while exeecuting an instruction. It doesn't execute a privileged instruction if mode bit = user.
+
+CPU won't allow OUT,IN instructions to be executed in user mode. instead some INT instruction needs to be executed.
+
+main() {
+	scanf()
+}
+// C library
+int scanf(..) {
+	some code
+	int 80;
+	some code;
+}
+// OS
+control goes to OS.
+
+ISR code:
+Check value of some register
+Do the task as per the code
+IRET.
+
+Scheduler is also an ISR
+
+OS runs only when an event occurs.
+
+INT instruction changes the mode bit and then executes the ISR which contains privileged instructions
+
+2 different modes - user and kernel
+But the contexts can be process(software-interrupt) and system(hardware-interrupt)
+
+So user mode and process context - appln programs
+user mode and system context - not allowed. Bcoz in user mode, the system context interrupts cannot be processed.
+kernel mode and process context - means that an interrupt occured due to a process, which caused cpu to change to kernel mode.
+kernel mode and system context - means that hardware interrupt changed cpu mode to kernel mode.

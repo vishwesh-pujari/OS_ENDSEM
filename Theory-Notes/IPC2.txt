@@ -1,0 +1,2 @@
+so pipe will classify as synchronous message passing
+pipe will block if the buffer is full/buffer is empty

@@ -1,0 +1,181 @@
+1. WHy GNU/Linux
+a. Programmer's Paradise - most versatile, vast, all pervasive programming environment
+b. Free Software - freedom, freely use, copy, modify
+c. Highly Productive - do more in less time
+d. Better quality, more secure, very few crashes
+
+2. WHy command line?
+a. Not for everyone! Absolutely!
+b. Those who do it are way more productive than others.
+c. Makes you think in programmatic fashion
+d. Portable. Learn one, use everywhere on all Unixes, Linuxes.
+e. ALl servers come without GUI
+
+3. Few Key Concepts:
+a. Files don't open themselves. ALways some application/program open() s a file.
+b. Files don't display themselves. A file is displayed by the program which opens it.
+c. Programs also don't run themselves. WHen we click on a program, we request OS to run it. OS runs your program.
+d. Users(humans) request OS to run programs using Graphical/Command Interface.
+
+4. Pathnames
+a. Tree like directory structure
+b. Root directory called /
+c. A complete path name for a file /home/student/a.c
+d. Relative path names: every running program has a current working directory
+	eg getcwd() is a system call in C to print current working dir.
+	. - current directoru
+	.. - parent directory
+	
+5. Command
+a. Name of an exeecutable file
+b. ls is actually /bin/ls
+c. Commands take arguments, options. Options and arguments are basically argv[] of the main() of that program
+pwd gives the current working directory of the program called as 'shell'.
+Every user has a home directory.
+
+~ means home directory(/home/vishwesh).
+
+6. Shell;
+Shell = Cover
+
+CPU -> Kernel -> Shell(user interface)
+Shell - interface betn kernel and user to execute programs. Shell requests OS to run programs.
+GUI is also a shell!
+
+7. File permissions on Linux:
+a. ls -l filename
+
+2 types of users: root(all-powerful) and non-root. Users can be grouped into 'groups'
+Every file has 3 sets of 3 permission:
+   - Octal notation
+   - Read = 4, Write = 2, Execute = 1
+   - 644 means Read-Write for owner, Read for group, REad for others.
+
+r on a file: can read the file
+  - open(..., O_RDONLY) works.
+  User can read file means, the program started by that user can read the file!
+w on a file: can modify
+x on a file - can ask OS to run file as executable.
+
+r on a directory: can do ls
+w on a directory: can add/remove files from that directory(even without 'r'!)
+x on a directory: can cd to that directory
+
+8. Man Pages:
+They have sections
+man 2 mkdir - read section 2 of mkdir
+man -k mkdir - shows all sections
+
+section1- commands
+section2 - system calls
+section3- lib functions
+section4- device drivers
+section5 - file formats
+
+GNU/Linux filesystem structure:
+
+/ - Root dire
+/bin - contains all essential commands for system to run
+/boot - Contains kernel images(actual machine code of the kernel), initrd and configuration files
+/dev - files representing hardware devices. These are different types of files. They are device files. Unix and Linux - everything is accessible as a file. Keyboard, mouse are accessible by files. Hence we can play with hardware
+
+sda - Hard disk
+nvme - ssd
+
+// C program to access hard drive:
+fd = open("/dev/sda", O_RDONLY);
+read(fd, arr, 128) // this reads first 128 bytes. But to be run as a sudo!
+here is specific information about ongoing processes. /proc is not present on HDD. This is a kernel data structure available as /proc folder. So currently running programs are also available as files on linuxes and unixes.
+/sys - system and device control
+/tmp - for temporary files. Normally whatever we write in /tmp is removed by ubuntu when we reboot.
+/usr - regualar user tools(not essential to the system), /usr/bin, /usr/lib
+/usr/local - preferred to /opt/
+/var - data used by the system or system servers
+/var/log - system log, server log
+
+Files: cat, cp, mv, rm
+
+cp a.c /tmp/ -> means that copy a.c into the folder /tmp
+cp -r -> copies folders
+
+Useful Commands:
+1. echo
+2. sort
+3. firefox
+4. libreoffice
+5. vlc
+6. grep
+7. less
+8. alias
+9. tar
+10. gzip
+11. touch
+12. strings
+13. adduser
+14. su (switch user)
+15. df
+16. du
+17. time
+18. date
+19. wc
+
+Network related commands
+
+Unix Job Control:
+The shell prompt only gets back after a program returns
+google-chrome & -> means process runs in the background
+
+If we start process as: google-chrome
+And then want to run it in backgrond: then press ctrl+Z(suspend/pause the process, not stop!)
+And then type bg. Then it will run in background
+
+$jobs # gives all the jobs running
+$fg # brings the background running jobs in a stack wise fashion to the foreground, we can stop them once they come here
+$bg # put that job in the background
+
+Ctrl + C - terminate
+
+kill %1 - first job
+Bring into foreground fg %1
+
+Mounting:
+
+Windows namespace is a forest. i.e. C:, D:, F: are different trees. There is one tree per partition in windows.
+
+Linux Namespace - single tree namespace (at the top we have a /)
+Root is also / and Separator is also /
+Combining of multiple Partitions(trees) into 1 is called mounting.
+In Linux, after mounting, a partition comes as a single folder on the file system!. Mounting means - accessing a partition as if it was a folder in the current file system.
+ 
+
+Use mount and umount on Ubuntu:
+
+sudo mount /dev/sda1 /extra/
+If /extra already contains files, then those are hidden, and /extra now points to partition. Once unmounted. The older data from /extra is visible. It's not overwritten. As Partition is physically different present on HDD.
+
+Partitions have a file system of a particular type. So to mount a partition of type zfs, our ubuntu must have support of type zfs. So we need to install zfs support
+
+mount -t nfs 172.16.1.200/folder /tmp/a
+This mounts folder on another computer to our computer! This is what is called as shared folder. This is nfs sharing.
+
+Mounting and Windows: (IMP!)
+https://www.top-password.com/blog/fully-shutdown-windows-10-instead-of-hibernating-it/
+When we click on Shutdown on windows, it actually hibernates(incomplete shutdown). Windows 10,8 do this so as to start faster the next time user switches on the computer. But, in this hibernation mode, windows doesn't release complete control on all hardware devices. That's why when we try to mount a HDD in ubuntu with read/write mode, we get following error:
+
+$sudo mount -t ntfs /dev/sda2 /home/oem/mount -o rw -o noload
+
+The disk contains an unclean file system (0, 0).
+Metadata kept in Windows cache, refused to mount.
+Failed to mount '/dev/sda2': Operation not permitted
+The NTFS partition is in an unsafe state. Please resume and shutdown
+Windows fully (no hibernation or fast restarting), or mount the volume
+read-only with the 'ro' mount option
+
+So, some HDD state was present in the windows cache. Hence HDD is in an inconsistent state. So shutting down windows COMPLETELY is essential. 
+Q: How to shut down windows completely?
+> shutdown /s 
+Type above on COmmand Prompt. See various options for shutting down by typing 'shutdown /?'
+
+passwd command modifies files like /etc/passwd and /etc/shadow
+
+See 's' bit in permission. suid. Process executing a user id.

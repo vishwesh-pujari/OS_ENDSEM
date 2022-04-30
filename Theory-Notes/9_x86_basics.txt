@@ -1,0 +1,74 @@
+AX-DX - general purpose registers
+IP == program counter
+
+Address space - the space in the ram which can be accessed by passing address
+
+multiply to 16 means left shift by 4
+
+pa = va + seg*16 (va means virtual address)
+
+Q. Suppose there is a 8086 processor, and we are running some OS on it. Whose Job is it to set value of code segment, data segment, etc. - Ans: Think. It's ok if you are not able to come up with the answer
+
+80586 is called as Pentium by Intel
+After pentium, intel started calling processors as i3, i5, etc
+Intel gives backward compatibility.
+
+While booting cpu runs in real mode - means 16 bit mode!
+
+for 32 bit processor, addressable memory = 2^32 = 2^2 GB - 4 GB
+In 80386, there are essentially 4 registers: EAX, EBX, ECX, EDX. AX, BX are parts of EAX,EBX
+
+Segment - chunk in the RAM which can be obtained by using the value of segment register
+	- Segment register contains starting address of that segment
+In 80386 how is CS:EIP used? Hold on. CS is not multiplied by 16 in 80386. The stuff is more complex here.
+OS sets values of CS, DS, etc. But The calculation of address of CS:EIP happpens in the processor.
+
+GNu assembler(gas) uses AT&T syntax: op src, dst (xv6)
+b - 8bit - byte
+w - 16bit  - word
+l - 32 bit - long
+
+movl $0x123, %edx - means store the number 0x123 in edx - immediate addressing - as operand is preesnt directly
+movl 0x123, %edx - means goto address 0x123, take 4 bytes(bcoz l is present) from there, store in edx. - direct addressing - as operand's address is directly given
+movl (%ebx), %edx - goto address present in ebx, load operand in edx
+
+Fetching instruction from memory - 1 cycle
+Fetching operand from memory - 1 cycle
+
+mov %eax, %ebx - assembler interprets this mov as 32 bit bcoz the registers specified are 32 bit.
+mov %ax, %bx - assembler interprets this as mov as 16 bit bcoz the registers specified are 16 bit
+
+mov $0x123, 0x123 # ambiguous. Assembler doesn't understand how many bytes should be used to store 123
+
+Protection levels / privilege levels - User mode and kernel mode
+
+Linux uses int 0x80 for system calls
+xv-6 uses int64 for system calls
+
+IDTR register gives address of IDT table in memory
+Each entry in IDT is called Gate
+IDT limit - tells how many entries are there in IDT
+
+OS initializes IDT, IDTR
+
+Memory Layout of a C program- This is a memory layout BY the compiler!. Compiler conceptulaizes this memory.
+text - object code of the program. i.e. object code of functions
+initialized data/data - global variables
+When we say data, we mean global variables
+uninitialized data(BSS) - 
+
+Stack and Heap are present in same section. Stack grows downward, Heap grows upward.
+
+environmemt vars - vars provided by parent of our program. eg shell is the parent of our program. So shell can provide some vars to the child. 
+
+Sections which are precisely known by the compiler - text, data, BSS
+text,data,BSS are present in ELF. When execv loads program in memory, these text,data,BSS are copied as it is into memory. THe OS creates stack and heap afterwards
+
+Why is Data,BSS present in ELF? - bcoz they have to be present in memory before the main() starts executing.
+
+Real mode and protected mode is not same as User mode and kernel mode.
+
+8086 didn't have a notion of user mode and kernel mode.  2 modes are necessary to write a multitasking OS. So not possible to do multitasking in 8086.
+In real mode, 16 bit mode, the calculations are done like segment*16  + offset. These are not the calculations done in 80386.
+
+Compilers Job is to generate machine code for the program.
